@@ -1,0 +1,57 @@
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+model User {
+  id        Int      @id @default(autoincrement())
+  name      String
+  email     String   @unique
+  password  String
+  company   String?
+  createdAt DateTime @default(now())
+  rides     Ride[]
+}
+
+model Driver {
+  id      Int    @id @default(autoincrement())
+  name    String
+  vehicle String
+  plate   String
+  rating  Float  @default(5.0)
+  rides   Ride[]
+}
+
+model Ride {
+  id        Int      @id @default(autoincrement())
+  userId    Int
+  driverId  Int?
+  pickup    String
+  drop      String
+  fare      Float
+  status    String   @default("requested") // requested | matched | ongoing | completed
+  createdAt DateTime @default(now())
+  user      User     @relation(fields: [userId], references: [id])
+  driver    Driver?  @relation(fields: [driverId], references: [id])
+}
+
+model RideRequest {
+  id        Int      @id @default(autoincrement())
+  userId    Int
+  pickup    String
+  drop      String
+  time      String
+  createdAt DateTime @default(now())
+}
+
+model RideMatch {
+  id          Int      @id @default(autoincrement())
+  requestId   Int
+  matchedWith Int
+  score       Float
+  createdAt   DateTime @default(now())
+}

@@ -1,0 +1,330 @@
+/* ── Login page ── */
+
+.login {
+  width: 100%;
+  max-width: 420px;
+  margin: 0 auto;
+  padding: 24px;
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+}
+
+/* ── Back button ── */
+
+.login .back-btn {
+  align-self: flex-start;
+  background: none;
+  border: none;
+  font-size: 1.5rem;
+  color: var(--text, #0F172A);
+  cursor: pointer;
+  padding: 4px 0;
+  margin-bottom: 24px;
+  line-height: 1;
+  transition: opacity 0.2s;
+}
+
+.login .back-btn:hover {
+  opacity: 0.6;
+}
+
+/* ── Heading ── */
+
+.login__heading {
+  font-size: 1.625rem;
+  font-weight: 700;
+  color: var(--text, #0F172A);
+  margin: 0 0 6px;
+}
+
+.login__subheading {
+  font-size: 0.875rem;
+  color: var(--muted, #64748B);
+  margin: 0 0 28px;
+}
+
+/* ── Form ── */
+
+.login__form {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  margin-bottom: 16px;
+}
+
+.login__field {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.login__label {
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: var(--muted, #64748B);
+  text-transform: uppercase;
+  letter-spacing: 0.4px;
+}
+
+/* ── Inputs (shared class) ── */
+
+.login .input {
+  width: 100%;
+  padding: 14px 16px;
+  border: 1.5px solid var(--line, #E2E8F0);
+  border-radius: var(--radius, 16px);
+  font-size: 0.9375rem;
+  color: var(--text, #0F172A);
+  background: var(--card, #FFFFFF);
+  outline: none;
+  transition: border-color 0.2s, box-shadow 0.2s;
+  box-sizing: border-box;
+}
+
+.login .input::placeholder {
+  color: var(--muted, #64748B);
+  opacity: 0.5;
+}
+
+.login .input:focus {
+  border-color: var(--primary, #2563EB);
+  box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.12);
+}
+
+/* ── Forgot password ── */
+
+.login__forgot-row {
+  display: flex;
+  justify-content: flex-end;
+  margin-top: -4px;
+}
+
+.login__forgot {
+  font-size: 0.8125rem;
+  color: var(--primary, #2563EB);
+  text-decoration: none;
+  font-weight: 500;
+  transition: opacity 0.2s;
+}
+
+.login__forgot:hover {
+  opacity: 0.7;
+}
+
+/* ── Buttons ── */
+
+.login .btn {
+  width: 100%;
+  padding: 14px 16px;
+  border-radius: var(--radius, 16px);
+  font-size: 0.9375rem;
+  font-weight: 600;
+  cursor: pointer;
+  border: none;
+  transition: background 0.2s, transform 0.15s, opacity 0.2s;
+  box-sizing: border-box;
+}
+
+.login .btn:active {
+  transform: translateY(1px);
+}
+
+.login .btn.btn-primary {
+  background: var(--primary, #2563EB);
+  color: #ffffff;
+  box-shadow: 0 4px 14px rgba(37, 99, 235, 0.3);
+}
+
+.login .btn.btn-primary:hover:not(:disabled) {
+  background: var(--primary-dark, #1D4ED8);
+}
+
+.login .btn.btn-primary:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.login .btn.btn-outline {
+  background: transparent;
+  color: var(--text, #0F172A);
+  border: 1.5px dashed var(--line, #E2E8F0);
+  margin-bottom: 4px;
+}
+
+.login .btn.btn-outline:hover {
+  border-color: var(--primary, #2563EB);
+  color: var(--primary, #2563EB);
+}
+
+.login .btn.btn-secondary {
+  background: var(--bg, #F8FAFC);
+  color: var(--text, #0F172A);
+  border: 1.5px solid var(--line, #E2E8F0);
+  font-weight: 500;
+}
+
+.login .btn.btn-secondary:hover {
+  border-color: var(--muted, #64748B);
+  background: #f1f5f9;
+}
+
+/* ── Error message ── */
+
+.login .error-message {
+  padding: 12px 16px;
+  border-radius: var(--radius, 16px);
+  background: rgba(239, 68, 68, 0.08);
+  color: var(--danger, #EF4444);
+  font-size: 0.8125rem;
+  font-weight: 500;
+  text-align: center;
+}
+
+/* ── Divider ── */
+
+.login__divider {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin: 20px 0;
+}
+
+.login__divider-line {
+  flex: 1;
+  height: 1px;
+  background: var(--line, #E2E8F0);
+}
+
+.login__divider-text {
+  font-size: 0.6875rem;
+  font-weight: 600;
+  color: var(--muted, #64748B);
+  letter-spacing: 0.6px;
+  white-space: nowrap;
+}
+
+/* ── Social buttons row ── */
+
+.login__social-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+  margin-bottom: 24px;
+}
+
+/* ── Footer ── */
+
+.login__footer {
+  text-align: center;
+  font-size: 0.8125rem;
+  color: var(--muted, #64748B);
+  margin-top: auto;
+  padding-top: 16px;
+}
+
+.login__footer-link {
+  color: var(--primary, #2563EB);
+  font-weight: 600;
+  cursor: pointer;
+  transition: opacity 0.2s;
+}
+
+.login__footer-link:hover {
+  opacity: 0.7;
+}
+
+/* ── SSO Modal ── */
+.sso-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(15, 23, 42, 0.6);
+  backdrop-filter: blur(4px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+  animation: fadeIn 0.2s ease-out;
+}
+
+.sso-modal {
+  background: var(--card, #FFFFFF);
+  border-radius: var(--radius, 16px);
+  width: 90%;
+  max-width: 400px;
+  padding: 24px;
+  box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+  animation: slideUp 0.25s ease-out;
+  box-sizing: border-box;
+}
+
+.sso-title {
+  font-size: 1.25rem;
+  font-weight: 700;
+  color: var(--text, #0F172A);
+  margin: 0 0 8px 0;
+}
+
+.sso-desc {
+  font-size: 0.875rem;
+  color: var(--muted, #64748B);
+  margin: 0 0 20px 0;
+}
+
+.sso-list {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.sso-btn {
+  width: 100%;
+  padding: 14px;
+  background: #f8fafc;
+  border: 1.5px solid var(--line, #E2E8F0);
+  border-radius: 12px;
+  font-size: 0.9375rem;
+  font-weight: 600;
+  color: var(--text, #0F172A);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  transition: background 0.2s, border-color 0.2s;
+  box-sizing: border-box;
+}
+
+.sso-btn:hover {
+  background: #f1f5f9;
+  border-color: var(--primary, #2563EB);
+}
+
+.sso-close {
+  width: 100%;
+  margin-top: 16px;
+  padding: 12px;
+  background: none;
+  border: none;
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: var(--muted, #64748B);
+  cursor: pointer;
+  transition: color 0.2s;
+}
+
+.sso-close:hover {
+  color: var(--text, #0F172A);
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes slideUp {
+  from { transform: translateY(20px); opacity: 0; }
+  to { transform: translateY(0); opacity: 1; }
+}

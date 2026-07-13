@@ -1,0 +1,133 @@
+/* ── Search Ride ── */
+
+.search-ride__card {
+  padding: 16px;
+  margin-bottom: 8px;
+}
+
+.search-ride__input-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.search-ride__dot {
+  display: inline-block;
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  flex-shrink: 0;
+  font-size: 0;
+  line-height: 0;
+}
+
+.search-ride__dot--green {
+  background: #22C55E;
+}
+
+.search-ride__dot--blue {
+  background: #2563EB;
+}
+
+.search-ride__connector {
+  border-left: 2px dotted var(--line);
+  height: 24px;
+  margin-left: 7px;
+}
+
+.search-ride__input {
+  flex: 1;
+  border: none;
+  outline: none;
+  font-size: 15px;
+  padding: 10px 0;
+  background: transparent;
+  color: var(--text);
+  font-family: inherit;
+}
+
+.search-ride__input--muted {
+  color: var(--muted);
+}
+
+.search-ride__input::placeholder {
+  color: var(--muted);
+}
+
+/* ── Action Rows ── */
+
+.search-ride__action-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 14px 16px;
+  border-bottom: 1px solid var(--line);
+  cursor: pointer;
+  font-size: 15px;
+  transition: background 0.18s;
+}
+
+.search-ride__action-row:hover {
+  background: rgba(0, 0, 0, 0.03);
+}
+
+.search-ride__chevron {
+  color: var(--muted);
+  font-size: 20px;
+  font-weight: 600;
+}
+
+/* ── Suggestions ── */
+
+.search-ride__suggestions-label {
+  margin-top: 20px;
+  margin-bottom: 8px;
+  font-size: 15px;
+  color: var(--muted);
+  font-weight: 600;
+}
+
+.search-ride__suggestion {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 14px 16px;
+  cursor: pointer;
+  border-radius: var(--radius);
+  transition: background 0.18s, border-left 0.18s;
+  border-left: 3px solid transparent;
+}
+
+.search-ride__suggestion:hover {
+  background: rgba(0, 0, 0, 0.03);
+  border-left-color: var(--primary);
+}
+
+.search-ride__suggestion-icon {
+  font-size: 22px;
+  flex-shrink: 0;
+}
+
+.search-ride__suggestion-text {
+  display: flex;
+  flex-direction: column;
+}
+
+.search-ride__suggestion-name {
+  font-weight: 600;
+  font-size: 15px;
+  color: var(--text);
+}
+
+.search-ride__suggestion-sub {
+  font-size: 13px;
+  color: var(--muted);
+  margin-top: 2px;
+}
+
+/* ── Confirm ── */
+
+.search-ride__confirm {
+  margin-top: 24px;
+  width: 100%;
+}
