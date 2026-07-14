@@ -4,7 +4,19 @@ const aiClient = require("../services/aiClient");
 
 exports.findMatches = async (req, res) => {
   try {
-    const { pickup, drop, time } = req.body;
+    const { 
+      pickup, 
+      drop, 
+      time, 
+      pickupLatitude, 
+      pickupLongitude, 
+      destinationLatitude, 
+      destinationLongitude, 
+      distance, 
+      travelTime, 
+      rideType 
+    } = req.body;
+
     if (!pickup || !drop) {
       return res.status(400).json({ error: "Pickup and drop locations are required" });
     }
@@ -25,12 +37,19 @@ exports.findMatches = async (req, res) => {
 
     const company = user.company || "Google";
 
-    // Call FastAPI matching service via Proxy Client
+    // Call FastAPI matching service via Proxy Client with map inputs
     const matches = await aiClient.getMatches({
       pickup: queryPickup,
       drop: queryDrop,
       time: queryTime,
-      company
+      company,
+      pickup_lat: pickupLatitude || null,
+      pickup_lng: pickupLongitude || null,
+      drop_lat: destinationLatitude || null,
+      drop_lng: destinationLongitude || null,
+      distance: distance || null,
+      travel_time: travelTime || null,
+      ride_type: rideType || null
     });
 
     // Save the RideRequest record in the database

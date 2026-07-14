@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import api from '../api/client';
 import { useRide } from '../context/RideContext';
@@ -13,18 +13,34 @@ const FALLBACK_RIDES = [
 
 export default function RideSelection() {
   const navigate = useNavigate();
-  const { pickup, destination, setSelectedRide } = useRide();
+  const { 
+    pickup, 
+    destination, 
+    pickupCoords, 
+    destinationCoords, 
+    setDistance, 
+    setTravelTime, 
+    setSelectedRide 
+  } = useRide();
 
   const [rides, setRides] = useState(FALLBACK_RIDES);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [selectedId, setSelectedId] = useState(null);
+  const mapRef = useRef(null);
 
   useEffect(() => {
     let cancelled = false;
-    (async () => {
+
+    const performSearch = async (dist, time) => {
       try {
-        const res = await api.post('/rides/search', { pickup, destination });
+        setLoading(true);
+        const res = await api.post('/rides/search', { 
+          pickup, 
+          destination, 
+          distance: dist, 
+          travelTime: time 
+        });
         if (!cancelled && res.data?.length) {
           const mapped = res.data.map(item => {
             let icon = '🚗';
@@ -58,9 +74,62 @@ export default function RideSelection() {
       } finally {
         if (!cancelled) setLoading(false);
       }
-    })();
+    };
+
+    if (window.google && window.google.maps && mapRef.current) {
+      // 1. Initialize Google Map
+      const map = new window.google.maps.Map(mapRef.current, {
+        center: pickupCoords || { lat: 12.9716, lng: 77.5946 },
+        zoom: 12,
+        disableDefaultUI: true,
+      });
+
+      // 2. Fetch directions
+      const directionsService = new window.google.maps.DirectionsService();
+      const directionsRenderer = new window.google.maps.DirectionsRenderer({ map });
+
+      const origin = pickupCoords || pickup;
+      const dest = destinationCoords || destination;
+
+      directionsService.route(
+        {
+          origin,
+          destination: dest,
+          travelMode: window.google.maps.TravelMode.DRIVING,
+        },
+        (result, status) => {
+          if (!cancelled) {
+            if (status === 'OK') {
+              directionsRenderer.setDirections(result);
+              const leg = result.routes[0].legs[0];
+              const dist = leg.distance.value / 1000;
+              const time = Math.round(leg.duration.value / 60);
+              
+              setDistance(dist);
+              setTravelTime(time);
+              performSearch(dist, time);
+            } else {
+              // Proximity calculation fallback if Directions Service fails
+              const dist = Math.max((pickup.length + destination.length) * 0.5, 2);
+              const time = Math.round(dist * 2.5);
+              setDistance(dist);
+              setTravelTime(time);
+              performSearch(dist, time);
+            }
+          }
+        }
+      );
+    } else {
+      // Proximity calculation fallback if Google Maps is unavailable
+      const dist = Math.max((pickup.length + (destination || '').length) * 0.5, 2);
+      const time = Math.round(dist * 2.5);
+      setDistance(dist);
+      setTravelTime(time);
+      performSearch(dist, time);
+    }
+
     return () => { cancelled = true; };
-  }, [pickup, destination]);
+  }, [pickup, destination, pickupCoords, destinationCoords, setDistance, setTravelTime]);
 
   const handleBook = () => {
     const ride = rides.find((r) => r.id === selectedId);
@@ -74,8 +143,9 @@ export default function RideSelection() {
     <div className="ride-select">
       {/* ── Map Area ── */}
       <div className="ride-select__map">
-        <div className="ride-select__map-road ride-select__map-road--h" />
-        <div className="ride-select__map-road ride-select__map-road--v" />
+        <div ref={mapRef} style={{ width: '100%', height: '100%', position: 'absolute', top: 0, left: 0 }} />
+        {!window.google && <div className="ride-select__map-road ride-select__map-road--h" />}
+        {!window.google && <div className="ride-select__map-road ride-select__map-road--v" />}
         <div className="ride-select__search-bar">
           <button className="ride-select__back" onClick={() => navigate('/search')}>←</button>
           <span className="ride-select__dest-text">{destination || 'Destination'}</span>

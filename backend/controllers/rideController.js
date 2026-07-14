@@ -18,17 +18,16 @@ async function getOrSeedDrivers() {
 
 exports.searchRides = async (req, res) => {
   try {
-    const { pickup, destination } = req.body;
+    const { pickup, destination, distance, travelTime } = req.body;
     if (!pickup || !destination) {
       return res.status(400).json({ error: "Pickup and destination are required" });
     }
 
-    // 1. Calculate mock distance and travel time based on character lengths
-    // TODO: Integrate Google Maps Distance Matrix API here after Maps integration
-    const distanceKm = Math.max((pickup.length + destination.length) * 0.5, 2); // Minimum 2km
-    const durationMins = Math.round(distanceKm * 2.5); // Simulating 2.5 mins per km
+    // Use map-calculated distance/duration if provided, else use fallback calculation
+    const distanceKm = distance || Math.max((pickup.length + destination.length) * 0.5, 2); 
+    const durationMins = travelTime || Math.round(distanceKm * 2.5); 
 
-    // 2. Generate fares based on distance
+    // Generate fares based on distance
     const fares = [
       { id: 1, type: "Shared Ride", fare: Math.round(distanceKm * 15 + 40), eta: `${Math.round(durationMins * 0.8)} mins` },
       { id: 2, type: "Private", fare: Math.round(distanceKm * 30 + 80), eta: `${Math.round(durationMins * 0.6)} mins` },
@@ -44,7 +43,18 @@ exports.searchRides = async (req, res) => {
 
 exports.bookRide = async (req, res) => {
   try {
-    const { pickup, destination, rideType } = req.body;
+    const { 
+      pickup, 
+      destination, 
+      rideType, 
+      pickupLatitude, 
+      pickupLongitude, 
+      destinationLatitude, 
+      destinationLongitude, 
+      distance, 
+      travelTime 
+    } = req.body;
+
     if (!pickup || !destination) {
       return res.status(400).json({ error: "Pickup and destination are required" });
     }
@@ -62,9 +72,9 @@ exports.bookRide = async (req, res) => {
     const drivers = await getOrSeedDrivers();
     const assignedDriver = drivers[Math.floor(Math.random() * drivers.length)];
 
-    // Calculate fare based on simulated distance
-    const distanceKm = Math.max((pickup.length + destination.length) * 0.5, 2);
-    const durationMins = Math.round(distanceKm * 2.5);
+    // Calculate fare based on distance
+    const distanceKm = distance || Math.max((pickup.length + destination.length) * 0.5, 2);
+    const durationMins = travelTime || Math.round(distanceKm * 2.5);
     
     let fare = distanceKm * 15 + 40;
     if (rideType === "Private") {
@@ -73,11 +83,11 @@ exports.bookRide = async (req, res) => {
       fare = distanceKm * 18 + 30;
     }
 
-    // TODO: Integrate Google Maps API to fetch real latitude/longitude coordinates
-    const pickupLatitude = 17.4483; // Placeholder Hyderabad coordinates
-    const pickupLongitude = 78.3915;
-    const destinationLatitude = 17.4834;
-    const destinationLongitude = 78.3842;
+    // Coordinates fallback to Hyderabad placeholder if not provided
+    const latP = pickupLatitude !== undefined && pickupLatitude !== null ? pickupLatitude : 17.4483;
+    const lngP = pickupLongitude !== undefined && pickupLongitude !== null ? pickupLongitude : 78.3915;
+    const latD = destinationLatitude !== undefined && destinationLatitude !== null ? destinationLatitude : 17.4834;
+    const lngD = destinationLongitude !== undefined && destinationLongitude !== null ? destinationLongitude : 78.3842;
 
     // Save the ride in PostgreSQL
     const ride = await prisma.ride.create({
@@ -88,10 +98,10 @@ exports.bookRide = async (req, res) => {
         drop: destination,
         fare: Math.round(fare),
         status: "requested",
-        pickupLatitude,
-        pickupLongitude,
-        destinationLatitude,
-        destinationLongitude,
+        pickupLatitude: latP,
+        pickupLongitude: lngP,
+        destinationLatitude: latD,
+        destinationLongitude: lngD,
         distance: distanceKm,
         travelTime: durationMins
       }

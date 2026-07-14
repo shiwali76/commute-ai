@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import api from '../api/client';
 import { useRide } from '../context/RideContext';
@@ -6,29 +6,68 @@ import './RideSummary.css';
 
 export default function RideSummary() {
   const navigate = useNavigate();
-  const { pickup, destination, selectedRide, setCurrentRideId } = useRide();
+  const { 
+    pickup, 
+    destination, 
+    pickupCoords, 
+    destinationCoords, 
+    distance, 
+    travelTime, 
+    selectedRide, 
+    setCurrentRideId 
+  } = useRide();
 
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
+  const mapRef = useRef(null);
 
   const rideName = selectedRide?.name || 'CommuteAI Shared';
   const rideFare = selectedRide?.fare || '₹85';
+
+  // Render Google Map with Route Directions
+  useEffect(() => {
+    if (window.google && window.google.maps && mapRef.current) {
+      const map = new window.google.maps.Map(mapRef.current, {
+        center: pickupCoords || { lat: 12.9716, lng: 77.5946 },
+        zoom: 12,
+        disableDefaultUI: true,
+      });
+
+      const directionsService = new window.google.maps.DirectionsService();
+      const directionsRenderer = new window.google.maps.DirectionsRenderer({ map });
+
+      const origin = pickupCoords || pickup;
+      const dest = destinationCoords || destination;
+
+      directionsService.route(
+        {
+          origin,
+          destination: dest,
+          travelMode: window.google.maps.TravelMode.DRIVING,
+        },
+        (result, status) => {
+          if (status === 'OK') {
+            directionsRenderer.setDirections(result);
+          }
+        }
+      );
+    }
+  }, [pickup, destination, pickupCoords, destinationCoords]);
 
   const handleBook = async () => {
     setLoading(true);
     setError('');
     try {
-      // TODO: Populate real latitudes, longitudes, distance, and duration here after Google Maps is integrated
       const res = await api.post('/rides', {
         pickup,
         destination,
-        rideType: rideName,
-        pickupLatitude: null,
-        pickupLongitude: null,
-        destinationLatitude: null,
-        destinationLongitude: null,
-        distance: null,
-        travelTime: null
+        rideType: selectedRide?.rawType || rideName,
+        pickupLatitude: pickupCoords?.lat || null,
+        pickupLongitude: pickupCoords?.lng || null,
+        destinationLatitude: destinationCoords?.lat || null,
+        destinationLongitude: destinationCoords?.lng || null,
+        distance: distance || null,
+        travelTime: travelTime || null
       });
       const rideId = res.data?.rideId;
       if (!rideId) {
@@ -49,7 +88,9 @@ export default function RideSummary() {
       <h2>Ride Summary</h2>
 
       {/* ── Mini Map ── */}
-      <div className="ride-summary__map" />
+      <div className="ride-summary__map">
+        <div ref={mapRef} style={{ width: '100%', height: '100%', borderRadius: '16px' }} />
+      </div>
 
       {/* ── Ride Card ── */}
       <div className="card ride-summary__card">
@@ -66,11 +107,10 @@ export default function RideSummary() {
 
         {/* ── Driver ── */}
         <div className="ride-summary__driver">
-          <div className="ride-summary__avatar">RK</div>
+          <div className="ride-summary__avatar">🤖</div>
           <div className="ride-summary__driver-info">
-            <span className="ride-summary__driver-name">Rajesh K.</span>
-            <span className="ride-summary__driver-meta">KA-01-AB-1234</span>
-            <span className="ride-summary__driver-meta">Hyundai i20</span>
+            <span className="ride-summary__driver-name">Matching Driver...</span>
+            <span className="ride-summary__driver-meta">Assigned immediately after booking</span>
           </div>
         </div>
 

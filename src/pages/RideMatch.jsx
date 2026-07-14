@@ -17,7 +17,17 @@ const FILTER_PILLS = ['Sort', '🚗 Car', '✓ Verified', '● Active'];
 
 export default function RideMatch() {
   const navigate = useNavigate();
-  const { setMatchedRider } = useRide();
+  const { 
+    pickup, 
+    destination, 
+    pickupCoords, 
+    destinationCoords, 
+    distance, 
+    travelTime, 
+    selectedRide, 
+    setMatchedRider 
+  } = useRide();
+
   const [riders, setRiders] = useState(FALLBACK_RIDERS);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -28,7 +38,18 @@ export default function RideMatch() {
     setLoading(true);
     setError(null);
 
-    api.post('/ai/match', { pickup: 'Current Location', drop: 'Tech Park', time: 'now' })
+    api.post('/ai/match', { 
+      pickup: pickup || 'Current Location', 
+      drop: destination || 'Tech Park', 
+      time: 'now',
+      pickupLatitude: pickupCoords?.lat || null,
+      pickupLongitude: pickupCoords?.lng || null,
+      destinationLatitude: destinationCoords?.lat || null,
+      destinationLongitude: destinationCoords?.lng || null,
+      distance: distance || null,
+      travelTime: travelTime || null,
+      rideType: selectedRide?.rawType || null
+    })
       .then((res) => {
         if (!cancelled && res.data && Array.isArray(res.data)) {
           setRiders(res.data);
@@ -44,7 +65,7 @@ export default function RideMatch() {
       });
 
     return () => { cancelled = true; };
-  }, []);
+  }, [pickup, destination, pickupCoords, destinationCoords, distance, travelTime, selectedRide]);
 
   const toggleFilter = (pill) => {
     setActiveFilters((prev) => {

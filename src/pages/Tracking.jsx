@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import api from '../api/client';
 import { useRide } from '../context/RideContext';
@@ -20,16 +20,93 @@ export default function Tracking() {
   const navigate = useNavigate();
   const [stage, setStage] = useState('eta');
   const [trackData, setTrackData] = useState(FALLBACK);
+  const mapRef = useRef(null);
 
   useEffect(() => {
-    const interval = setInterval(() => {
+    const fetchTracking = () => {
       api
         .get(`/rides/${rideId}/track`)
         .then((res) => setTrackData(res.data))
         .catch(() => {});
-    }, 8000);
+    };
+    fetchTracking();
+    const interval = setInterval(fetchTracking, 8000);
     return () => clearInterval(interval);
   }, [rideId]);
+
+  // Google Map Rendering with Route Directions and Driver Location Marker
+  useEffect(() => {
+    if (window.google && window.google.maps && mapRef.current && trackData) {
+      // 1. Center map around current driver location (or default Bangalore coordinates)
+      const lat = trackData.location?.lat || 12.9716;
+      const lng = trackData.location?.lng || 77.5946;
+
+      const map = new window.google.maps.Map(mapRef.current, {
+        center: { lat, lng },
+        zoom: 13,
+        disableDefaultUI: true,
+      });
+
+      // 2. Fetch directions
+      const directionsService = new window.google.maps.DirectionsService();
+      const directionsRenderer = new window.google.maps.DirectionsRenderer({
+        map,
+        suppressMarkers: true, // Hide default marker icons to use custom icons
+      });
+
+      const origin = trackData.currentLocation || "Koramangala";
+      const dest = trackData.destination || "Whitefield";
+
+      directionsService.route(
+        {
+          origin,
+          destination: dest,
+          travelMode: window.google.maps.TravelMode.DRIVING,
+        },
+        (result, status) => {
+          if (status === 'OK') {
+            directionsRenderer.setDirections(result);
+            
+            // Draw Pickup Marker
+            const leg = result.routes[0].legs[0];
+            new window.google.maps.Marker({
+              position: leg.start_location,
+              map,
+              title: "Pickup",
+              icon: {
+                url: "data:image/svg+xml;utf-8,<svg xmlns='http://www.w3.org/2000/svg' width='24' height='24' viewBox='0 0 24 24' fill='%2322C55E'><circle cx='12' cy='12' r='8' stroke='white' stroke-width='2'/></svg>",
+                scaledSize: new window.google.maps.Size(24, 24),
+              }
+            });
+
+            // Draw Dropoff Marker
+            new window.google.maps.Marker({
+              position: leg.end_location,
+              map,
+              title: "Dropoff",
+              icon: {
+                url: "data:image/svg+xml;utf-8,<svg xmlns='http://www.w3.org/2000/svg' width='24' height='24' viewBox='0 0 24 24' fill='%232563EB'><path d='M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z'/></svg>",
+                scaledSize: new window.google.maps.Size(24, 24),
+              }
+            });
+          }
+        }
+      );
+
+      // 3. Draw Dynamic Driver (Car) Marker
+      if (trackData.location && typeof trackData.location === 'object') {
+        new window.google.maps.Marker({
+          position: trackData.location,
+          map,
+          title: "Driver Location",
+          icon: {
+            url: "data:image/svg+xml;utf-8,<svg xmlns='http://www.w3.org/2000/svg' width='32' height='32' viewBox='0 0 24 24' fill='%232563EB'><path d='M18.92 6.01C18.72 5.42 18.16 5 17.5 5h-11c-.66 0-1.21.42-1.42 1.01L3 12v8c0 .55.45 1 1 1h1c.55 0 1-.45 1-1v-1h12v1c0 .55.45 1 1 1h1c.55 0 1-.45 1-1v-8l-2.08-5.99zM6.85 7h10.29l1.04 3H5.81l1.04-3zM19 17H5v-5h14v5z'/><circle cx='7.5' cy='14.5' r='1.5' fill='%2394A3B8'/><circle cx='16.5' cy='14.5' r='1.5' fill='%2394A3B8'/></svg>",
+            scaledSize: new window.google.maps.Size(32, 32),
+          }
+        });
+      }
+    }
+  }, [stage, trackData]);
 
   const initials = trackData.driverName
     .split(' ')
@@ -70,10 +147,11 @@ export default function Tracking() {
           Latest arrival by {trackData.latestArrival}
         </p>
 
-        {/* map placeholder */}
+        {/* map container */}
         <div className="tracking__map">
-          <div className="tracking__map-road tracking__map-road--h" />
-          <div className="tracking__map-road tracking__map-road--v" />
+          <div ref={mapRef} style={{ width: '100%', height: '100%', position: 'absolute', top: 0, left: 0 }} />
+          {!window.google && <div className="tracking__map-road tracking__map-road--h" />}
+          {!window.google && <div className="tracking__map-road tracking__map-road--v" />}
           <span className="tracking__map-tag">
             🚗 {trackData.eta} away
           </span>
@@ -102,8 +180,9 @@ export default function Tracking() {
     <div className="page page--no-nav tracking">
       {/* map */}
       <div className="tracking__map tracking__map--tall">
-        <div className="tracking__map-road tracking__map-road--h" />
-        <div className="tracking__map-road tracking__map-road--v" />
+        <div ref={mapRef} style={{ width: '100%', height: '100%', position: 'absolute', top: 0, left: 0 }} />
+        {!window.google && <div className="tracking__map-road tracking__map-road--h" />}
+        {!window.google && <div className="tracking__map-road tracking__map-road--v" />}
         <span className="tracking__map-tag">
           🚗 {trackData.eta} away
         </span>

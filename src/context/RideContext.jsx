@@ -5,6 +5,10 @@ const RideContext = createContext();
 export function RideProvider({ children }) {
   const [pickup, setPickup] = useState("Current Location");
   const [destination, setDestination] = useState("");
+  const [pickupCoords, setPickupCoords] = useState({ lat: 12.9716, lng: 77.5946 }); // Default Bangalore Center
+  const [destinationCoords, setDestinationCoords] = useState(null);
+  const [distance, setDistance] = useState(null);
+  const [travelTime, setTravelTime] = useState(null);
   const [selectedRide, setSelectedRide] = useState(null);
   const [matchedRider, setMatchedRider] = useState(null);
   const [currentRideId, setCurrentRideId] = useState(null);
@@ -16,6 +20,14 @@ export function RideProvider({ children }) {
         setPickup,
         destination,
         setDestination,
+        pickupCoords,
+        setPickupCoords,
+        destinationCoords,
+        setDestinationCoords,
+        distance,
+        setDistance,
+        travelTime,
+        setTravelTime,
         selectedRide,
         setSelectedRide,
         matchedRider,
