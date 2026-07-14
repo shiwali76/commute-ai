@@ -1,6 +1,9 @@
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { RideProvider } from "./context/RideContext";
 import ProtectedRoute from "./components/ProtectedRoute";
+import { AssistantProvider } from "./components/AIAssistant/AssistantContext";
+import AIAssistant from "./components/AIAssistant/AIAssistant";
+import "./components/AIAssistant/AIAssistant.css";
 
 import Landing from "./pages/Landing";
 import Login from "./pages/Login";
@@ -21,101 +24,106 @@ function App() {
   return (
     <BrowserRouter>
       <RideProvider>
-        <div className="app-shell">
-          <Routes>
-            <Route path="/" element={<Landing />} />
-            <Route path="/login" element={<Login />} />
-            <Route path="/register" element={<Register />} />
-            <Route
-              path="/dashboard"
-              element={
-                <ProtectedRoute>
-                  <Dashboard />
-                </ProtectedRoute>
-              }
-            />
-            <Route
-              path="/search"
-              element={
-                <ProtectedRoute>
-                  <SearchRide />
-                </ProtectedRoute>
-              }
-            />
-            <Route
-              path="/choose-ride"
-              element={
-                <ProtectedRoute>
-                  <RideSelection />
-                </ProtectedRoute>
-              }
-            />
-            <Route
-              path="/ride-summary"
-              element={
-                <ProtectedRoute>
-                  <RideSummary />
-                </ProtectedRoute>
-              }
-            />
-            <Route
-              path="/match"
-              element={
-                <ProtectedRoute>
-                  <RideMatch />
-                </ProtectedRoute>
-              }
-            />
-            <Route
-              path="/match/:riderId"
-              element={
-                <ProtectedRoute>
-                  <RiderProfile />
-                </ProtectedRoute>
-              }
-            />
-            <Route
-              path="/match/confirmed"
-              element={
-                <ProtectedRoute>
-                  <MatchConfirmed />
-                </ProtectedRoute>
-              }
-            />
-            <Route
-              path="/track/:rideId"
-              element={
-                <ProtectedRoute>
-                  <Tracking />
-                </ProtectedRoute>
-              }
-            />
-            <Route
-              path="/fare-compare"
-              element={
-                <ProtectedRoute>
-                  <FareCompare />
-                </ProtectedRoute>
-              }
-            />
-            <Route
-              path="/profile"
-              element={
-                <ProtectedRoute>
-                  <Profile />
-                </ProtectedRoute>
-              }
-            />
-            <Route
-              path="/settings"
-              element={
-                <ProtectedRoute>
-                  <Settings />
-                </ProtectedRoute>
-              }
-            />
-          </Routes>
-        </div>
+        <AssistantProvider>
+          <div className="app-shell">
+            <Routes>
+              <Route path="/" element={<Landing />} />
+              <Route path="/login" element={<Login />} />
+              <Route path="/register" element={<Register />} />
+              <Route
+                path="/dashboard"
+                element={
+                  <ProtectedRoute>
+                    <Dashboard />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/search"
+                element={
+                  <ProtectedRoute>
+                    <SearchRide />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/choose-ride"
+                element={
+                  <ProtectedRoute>
+                    <RideSelection />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/ride-summary"
+                element={
+                  <ProtectedRoute>
+                    <RideSummary />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/match"
+                element={
+                  <ProtectedRoute>
+                    <RideMatch />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/match/:riderId"
+                element={
+                  <ProtectedRoute>
+                    <RiderProfile />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/match/confirmed"
+                element={
+                  <ProtectedRoute>
+                    <MatchConfirmed />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/track/:rideId"
+                element={
+                  <ProtectedRoute>
+                    <Tracking />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/fare-compare"
+                element={
+                  <ProtectedRoute>
+                    <FareCompare />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/profile"
+                element={
+                  <ProtectedRoute>
+                    <Profile />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/settings"
+                element={
+                  <ProtectedRoute>
+                    <Settings />
+                  </ProtectedRoute>
+                }
+              />
+            </Routes>
+
+            {/* AI Assistant floats above all pages */}
+            <AIAssistant />
+          </div>
+        </AssistantProvider>
       </RideProvider>
     </BrowserRouter>
   );
