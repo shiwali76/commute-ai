@@ -47,7 +47,7 @@ export default function Dashboard() {
         {/* ── Greeting row ── */}
         <div className="dashboard__greeting">
           <div>
-            <h2>Hello Alex 👋</h2>
+            <h2>Hello {data?.userName || 'Rider'} 👋</h2>
             <p className="text-muted">Where are you going today?</p>
           </div>
           <button className="dashboard__bell" aria-label="Notifications">

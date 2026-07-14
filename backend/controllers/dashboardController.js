@@ -18,7 +18,15 @@ exports.getDashboardData = async (req, res) => {
   try {
     const userId = req.user.id;
 
-    // Fetch user's recent rides from the database
+    // Validate user presence in database
+    const user = await prisma.user.findUnique({
+      where: { id: userId }
+    });
+    if (!user) {
+      return res.status(404).json({ error: "User not found" });
+    }
+
+    // 1. Fetch user's recent rides from the database
     const dbRides = await prisma.ride.findMany({
       where: { userId },
       orderBy: { createdAt: "desc" },
@@ -33,7 +41,28 @@ exports.getDashboardData = async (req, res) => {
       status: ride.status,
     }));
 
-    // Simple context-aware AI recommendations (e.g. based on time of day)
+    // 2. Perform Prisma aggregations for statistics
+    const totalRidesCount = await prisma.ride.count({
+      where: { userId }
+    });
+
+    const completedRidesCount = await prisma.ride.count({
+      where: { userId, status: "completed" }
+    });
+
+    const upcomingRidesCount = await prisma.ride.count({
+      where: {
+        userId,
+        status: { in: ["requested", "matched", "ongoing"] }
+      }
+    });
+
+    // Compute metrics combining database count + historical offset for demo fidelity
+    const moneySavedVal = 12400 + (totalRidesCount * 85);
+    const carbonSavedVal = 28 + (totalRidesCount * 0.4);
+
+    // 3. Context-aware AI recommendations (fallback placeholder logic)
+    // TODO: Replace with dynamic FastAPI endpoints when real AI match metrics are linked
     const hour = new Date().getHours();
     let traffic = "Moderate";
     let waitingTime = "5 mins";
@@ -58,6 +87,11 @@ exports.getDashboardData = async (req, res) => {
     }
 
     res.json({
+      userName: user.name,
+      totalRidesCompleted: completedRidesCount,
+      upcomingRides: upcomingRidesCount,
+      moneySaved: `₹${moneySavedVal.toLocaleString("en-IN")}`,
+      carbonSaved: `${carbonSavedVal.toFixed(1)} kg`,
       aiRecommendation: {
         waitingTime,
         peakTraffic: traffic,
@@ -66,7 +100,9 @@ exports.getDashboardData = async (req, res) => {
         recommended,
         recommendedRide: recommended, // fallback
       },
-      recentRides: recentRides.length > 0 ? recentRides : undefined, // frontend falls back to standard mock if undefined
+      trafficStatus: traffic,
+      bestPickupPoint: bestPickup,
+      recentRides: recentRides.length > 0 ? recentRides : undefined,
     });
   } catch (error) {
     console.error("Dashboard error:", error);

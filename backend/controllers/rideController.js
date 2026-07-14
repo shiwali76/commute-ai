@@ -1,7 +1,7 @@
 const { PrismaClient } = require("@prisma/client");
 const prisma = new PrismaClient();
 
-// Seed drivers if none exist in the database
+// Dynamic seeding fallback for drivers
 async function getOrSeedDrivers() {
   const count = await prisma.driver.count();
   if (count === 0) {
@@ -17,52 +17,98 @@ async function getOrSeedDrivers() {
 }
 
 exports.searchRides = async (req, res) => {
-  const { pickup, destination } = req.body;
-  if (!pickup || !destination) {
-    return res.status(400).json({ error: "Pickup and destination are required" });
+  try {
+    const { pickup, destination } = req.body;
+    if (!pickup || !destination) {
+      return res.status(400).json({ error: "Pickup and destination are required" });
+    }
+
+    // 1. Calculate mock distance and travel time based on character lengths
+    // TODO: Integrate Google Maps Distance Matrix API here after Maps integration
+    const distanceKm = Math.max((pickup.length + destination.length) * 0.5, 2); // Minimum 2km
+    const durationMins = Math.round(distanceKm * 2.5); // Simulating 2.5 mins per km
+
+    // 2. Generate fares based on distance
+    const fares = [
+      { id: 1, type: "Shared Ride", fare: Math.round(distanceKm * 15 + 40), eta: `${Math.round(durationMins * 0.8)} mins` },
+      { id: 2, type: "Private", fare: Math.round(distanceKm * 30 + 80), eta: `${Math.round(durationMins * 0.6)} mins` },
+      { id: 3, type: "Electric Mini", fare: Math.round(distanceKm * 18 + 30), eta: `${durationMins} mins` }
+    ];
+
+    res.json(fares);
+  } catch (error) {
+    console.error("Search rides error:", error);
+    res.status(500).json({ error: "Failed to search rides" });
   }
-
-  // Generate dynamic fares based on character length of inputs to simulate route distance
-  const baseDistance = (pickup.length + destination.length) * 4;
-  const fares = [
-    { id: 1, type: "Shared Ride", fare: Math.round(baseDistance * 1.5 + 40), eta: "8 min" },
-    { id: 2, type: "Private", fare: Math.round(baseDistance * 3.2 + 80), eta: "5 min" },
-    { id: 3, type: "Electric Mini", fare: Math.round(baseDistance * 1.2 + 30), eta: "12 min" }
-  ];
-
-  res.json(fares);
 };
 
 exports.bookRide = async (req, res) => {
-  const { pickup, destination, rideType } = req.body;
-  if (!pickup || !destination) {
-    return res.status(400).json({ error: "Pickup and destination are required" });
-  }
-
   try {
+    const { pickup, destination, rideType } = req.body;
+    if (!pickup || !destination) {
+      return res.status(400).json({ error: "Pickup and destination are required" });
+    }
+
     const userId = req.user.id;
+
+    // Fetch user details to get company context for AI matching
+    const user = await prisma.user.findUnique({
+      where: { id: userId }
+    });
+    if (!user) {
+      return res.status(404).json({ error: "User not found" });
+    }
+
     const drivers = await getOrSeedDrivers();
     const assignedDriver = drivers[Math.floor(Math.random() * drivers.length)];
 
-    // Deduce simulated fare
-    const baseDistance = (pickup.length + destination.length) * 4;
-    let fare = baseDistance * 1.5 + 40;
+    // Calculate fare based on simulated distance
+    const distanceKm = Math.max((pickup.length + destination.length) * 0.5, 2);
+    const durationMins = Math.round(distanceKm * 2.5);
+    
+    let fare = distanceKm * 15 + 40;
     if (rideType === "Private") {
-      fare = baseDistance * 3.2 + 80;
+      fare = distanceKm * 30 + 80;
     } else if (rideType === "Electric Mini") {
-      fare = baseDistance * 1.2 + 30;
+      fare = distanceKm * 18 + 30;
     }
 
+    // TODO: Integrate Google Maps API to fetch real latitude/longitude coordinates
+    const pickupLatitude = 17.4483; // Placeholder Hyderabad coordinates
+    const pickupLongitude = 78.3915;
+    const destinationLatitude = 17.4834;
+    const destinationLongitude = 78.3842;
+
+    // Save the ride in PostgreSQL
     const ride = await prisma.ride.create({
       data: {
         userId,
         driverId: assignedDriver.id,
         pickup,
         drop: destination,
-        fare,
-        status: "requested"
+        fare: Math.round(fare),
+        status: "requested",
+        pickupLatitude,
+        pickupLongitude,
+        destinationLatitude,
+        destinationLongitude,
+        distance: distanceKm,
+        travelTime: durationMins
       }
     });
+
+    // AI Match Service Preparation
+    // TODO: In step 8, connect this block to send the payload to FastAPI matching service at AI_SERVICE_URL:
+    /*
+    const aiPayload = {
+      pickup: ride.pickup,
+      drop: ride.drop,
+      departureTime: ride.createdAt,
+      company: user.company || "Google",
+      userId: user.id
+    };
+    // await axios.post(`${process.env.AI_SERVICE_URL}/match`, aiPayload);
+    */
 
     res.status(201).json({
       id: ride.id,
@@ -78,11 +124,12 @@ exports.bookRide = async (req, res) => {
 };
 
 exports.trackRide = async (req, res) => {
-  const { id } = req.params;
-
   try {
+    const { id } = req.params;
+    const userId = req.user.id;
     let ride = null;
     const parsedId = parseInt(id, 10);
+
     if (!isNaN(parsedId)) {
       ride = await prisma.ride.findUnique({
         where: { id: parsedId },
@@ -90,35 +137,36 @@ exports.trackRide = async (req, res) => {
       });
     }
 
-    // Fallback if no ride found or ID is "latest"
+    // Fallback: if not found by ID or ID is "latest", return user's latest booked ride
     if (!ride) {
-      const drivers = await getOrSeedDrivers();
-      const fallbackDriver = drivers[0];
-      return res.json({
-        driver: fallbackDriver.name,
-        driverName: fallbackDriver.name,
-        car: fallbackDriver.vehicle,
-        vehicle: `${fallbackDriver.vehicle} - ${fallbackDriver.plate}`,
-        eta: "5 min",
-        arrivalTime: "9:15 AM",
-        latestArrival: "9:25 AM",
-        location: { lat: 17.4483, lng: 78.3915 },
-        currentLocation: "Koramangala",
-        destination: "Tech Park, Whitefield"
+      ride = await prisma.ride.findFirst({
+        where: { userId },
+        orderBy: { createdAt: "desc" },
+        include: { driver: true }
       });
     }
+
+    // If still no ride in database, raise error
+    if (!ride) {
+      return res.status(404).json({ error: "No rides found to track" });
+    }
+
+    // TODO: After Google Maps is integrated, use real driver real-time coordinates
+    const mockDriverLat = ride.pickupLatitude || 17.4483;
+    const mockDriverLng = ride.pickupLongitude || 78.3915;
 
     res.json({
       id: ride.id,
       rideId: ride.id,
-      driver: ride.driver.name,
-      driverName: ride.driver.name,
-      car: ride.driver.vehicle,
-      vehicle: `${ride.driver.vehicle} - ${ride.driver.plate}`,
-      eta: "7 mins",
+      status: ride.status,
+      driver: ride.driver ? ride.driver.name : "Driver Assigned",
+      driverName: ride.driver ? ride.driver.name : "Driver Assigned",
+      car: ride.driver ? ride.driver.vehicle : "Vehicle Assigned",
+      vehicle: ride.driver ? `${ride.driver.vehicle} - ${ride.driver.plate}` : "Vehicle Assigned",
+      eta: `${ride.travelTime || 7} mins`,
       arrivalTime: "9:20 AM",
       latestArrival: "9:30 AM",
-      location: { lat: 17.4483, lng: 78.3915 },
+      location: { lat: mockDriverLat, lng: mockDriverLng },
       currentLocation: ride.pickup,
       destination: ride.drop
     });

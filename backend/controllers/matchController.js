@@ -3,23 +3,29 @@ const prisma = new PrismaClient();
 const aiClient = require("../services/aiClient");
 
 exports.findMatches = async (req, res) => {
-  const { pickup, drop, time } = req.body;
-  
-  // Frontend fallback options if inputs are blank
-  const queryPickup = pickup || "Current Location";
-  const queryDrop = drop || "Tech Park";
-  const queryTime = time || "now";
-
   try {
+    const { pickup, drop, time } = req.body;
+    if (!pickup || !drop) {
+      return res.status(400).json({ error: "Pickup and drop locations are required" });
+    }
+
+    const queryPickup = pickup;
+    const queryDrop = drop;
+    const queryTime = time || "now";
     const userId = req.user.id;
+
     const user = await prisma.user.findUnique({
       where: { id: userId },
       select: { company: true }
     });
 
-    const company = user?.company || null;
+    if (!user) {
+      return res.status(404).json({ error: "User not found" });
+    }
 
-    // Call FastAPI service
+    const company = user.company || "Google";
+
+    // Call FastAPI matching service via Proxy Client
     const matches = await aiClient.getMatches({
       pickup: queryPickup,
       drop: queryDrop,
@@ -27,14 +33,30 @@ exports.findMatches = async (req, res) => {
       company
     });
 
+    // Save the RideRequest record in the database
+    const rideRequest = await prisma.rideRequest.create({
+      data: {
+        userId,
+        pickup: queryPickup,
+        drop: queryDrop,
+        time: queryTime
+      }
+    });
+
+    // Save corresponding RideMatch records in the database
+    for (const match of matches) {
+      await prisma.rideMatch.create({
+        data: {
+          requestId: rideRequest.id,
+          matchedWith: 1, // Matched entity placeholder ID
+          score: parseFloat(match.match) || 0.0
+        }
+      });
+    }
+
     res.json(matches);
   } catch (error) {
-    console.warn("FastAPI match error, falling back to mock matches:", error.message);
-    
-    // Fallback data if FastAPI server is unreachable
-    res.json([
-      { name: "Tony", fare: 60, eta: "8 mins", match: 95, company: "Infosys" },
-      { name: "Priya", fare: 110, eta: "10 mins", match: 78, company: "Amazon" }
-    ]);
+    console.error("Match error calling FastAPI service:", error.message);
+    res.status(503).json({ message: "AI Service unavailable" });
   }
 };
