@@ -25,9 +25,36 @@ export default function RideSelection() {
     (async () => {
       try {
         const res = await api.post('/rides/search', { pickup, destination });
-        if (!cancelled && res.data?.length) setRides(res.data);
-      } catch {
-        /* keep fallback */
+        if (!cancelled && res.data?.length) {
+          const mapped = res.data.map(item => {
+            let icon = '🚗';
+            let note = 'Eco-friendly';
+            if (item.type === 'Private') {
+              icon = '🚙';
+              note = 'Private Sedan';
+            } else if (item.type === 'Electric Mini') {
+              icon = '⚡';
+              note = 'Green Commute';
+            } else if (item.type === 'Shared Ride') {
+              icon = '🤝';
+              note = '2 seats left';
+            }
+            return {
+              id: item.id,
+              icon,
+              name: item.type,
+              eta: item.eta,
+              note,
+              fare: typeof item.fare === 'number' ? `₹${item.fare}` : item.fare,
+              rawFare: item.fare,
+              rawType: item.type
+            };
+          });
+          setRides(mapped);
+        }
+      } catch (err) {
+        if (err.response?.status === 401) return;
+        setError(err.response?.data?.error || err.response?.data?.message || 'Failed to search ride options');
       } finally {
         if (!cancelled) setLoading(false);
       }

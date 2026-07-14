@@ -18,17 +18,26 @@ export default function RideSummary() {
     setLoading(true);
     setError('');
     try {
+      // TODO: Populate real latitudes, longitudes, distance, and duration here after Google Maps is integrated
       const res = await api.post('/rides', {
         pickup,
         destination,
         rideType: rideName,
+        pickupLatitude: null,
+        pickupLongitude: null,
+        destinationLatitude: null,
+        destinationLongitude: null,
+        distance: null,
+        travelTime: null
       });
-      const rideId = res.data?.rideId || 'latest';
+      const rideId = res.data?.rideId;
+      if (!rideId) {
+        throw new Error('Did not receive a valid ride ID from the server.');
+      }
       setCurrentRideId(rideId);
       navigate('/track/' + rideId);
     } catch (err) {
-      setError('Booking failed — redirecting…');
-      setTimeout(() => navigate('/track/latest'), 1200);
+      setError(err.response?.data?.error || err.response?.data?.message || err.message || 'Booking failed. Please try again.');
     } finally {
       setLoading(false);
     }
