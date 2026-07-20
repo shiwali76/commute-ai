@@ -25,7 +25,7 @@ export default function Tracking() {
   useEffect(() => {
     const fetchTracking = () => {
       api
-        .get(`/rides/${rideId}/track`)
+        .get(`/api/rides/${rideId}/track`)
         .then((res) => setTrackData(res.data))
         .catch(() => {});
     };

@@ -21,7 +21,7 @@ export default function Profile() {
 
   useEffect(() => {
     api
-      .get('/profile')
+      .get('/api/profile')
       .then((res) => setProfile(res.data))
       .catch(() => {});
   }, []);

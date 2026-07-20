@@ -126,7 +126,7 @@ export async function executeFunctionCall(name, args, apiClient, rideContext) {
       case 'search_rides': {
         const resolvedPickup = args.pickup || pickup || 'Current Location';
         const resolvedDest   = args.destination || destination || 'Tech Park';
-        const res = await apiClient.post('/rides/search', {
+        const res = await apiClient.post('/api/rides/search', {
           pickup: resolvedPickup,
           destination: resolvedDest,
         });
@@ -148,7 +148,7 @@ export async function executeFunctionCall(name, args, apiClient, rideContext) {
         const p = args.pickup      || pickup      || 'Current Location';
         const d = args.destination || destination;
         if (!d) return { error: 'Please tell me where you want to go first.' };
-        const res = await apiClient.post('/rides', {
+        const res = await apiClient.post('/api/rides', {
           pickup:      p,
           destination: d,
           rideType:    args.rideType || 'Shared Ride',
@@ -174,7 +174,7 @@ export async function executeFunctionCall(name, args, apiClient, rideContext) {
           (args.rideId && args.rideId !== 'current' && args.rideId !== 'latest')
             ? args.rideId
             : currentRideId || 'latest';
-        const res = await apiClient.get('/rides/' + id + '/track');
+        const res = await apiClient.get('/api/rides/' + id + '/track');
         const d = res.data;
         return {
           rideId:         d.rideId,
@@ -190,7 +190,7 @@ export async function executeFunctionCall(name, args, apiClient, rideContext) {
 
       // ── 4. get_dashboard ──────────────────────────────────────────
       case 'get_dashboard': {
-        const res = await apiClient.get('/dashboard');
+        const res = await apiClient.get('/api/dashboard');
         const d   = res.data;
         return {
           userName:             d.userName,
@@ -213,7 +213,7 @@ export async function executeFunctionCall(name, args, apiClient, rideContext) {
 
       // ── 5. get_profile ────────────────────────────────────────────
       case 'get_profile': {
-        const res = await apiClient.get('/profile');
+        const res = await apiClient.get('/api/profile');
         const d   = res.data;
         return {
           name:        d.name,
@@ -230,7 +230,7 @@ export async function executeFunctionCall(name, args, apiClient, rideContext) {
       case 'find_carpool_matches': {
         const resolvedPickup = args.pickup      || pickup      || 'Current Location';
         const resolvedDest   = args.destination || destination || 'Tech Park';
-        const res = await apiClient.post('/ai/match', {
+        const res = await apiClient.post('/api/ai/match', {
           pickup: resolvedPickup,
           drop:   resolvedDest,
           time:   'now',

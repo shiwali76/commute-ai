@@ -38,7 +38,7 @@ export default function RideMatch() {
     setLoading(true);
     setError(null);
 
-    api.post('/ai/match', { 
+    api.post('/api/ai/match', { 
       pickup: pickup || 'Current Location', 
       drop: destination || 'Tech Park', 
       time: 'now',

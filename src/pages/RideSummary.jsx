@@ -58,7 +58,7 @@ export default function RideSummary() {
     setLoading(true);
     setError('');
     try {
-      const res = await api.post('/rides', {
+      const res = await api.post('/api/rides', {
         pickup,
         destination,
         rideType: selectedRide?.rawType || rideName,

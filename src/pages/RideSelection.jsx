@@ -35,7 +35,7 @@ export default function RideSelection() {
     const performSearch = async (dist, time) => {
       try {
         setLoading(true);
-        const res = await api.post('/rides/search', { 
+        const res = await api.post('/api/rides/search', { 
           pickup, 
           destination, 
           distance: dist, 
